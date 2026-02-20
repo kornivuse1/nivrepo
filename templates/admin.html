@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Admin – NivPro{% endblock %}
+{% block body %}
+<div class="container admin-container">
+  <header class="header">
+    <h1>NivPro Admin</h1>
+    <div id="user-area"></div>
+  </header>
+
+  <div id="login-section">
+    <form id="login-form" class="card">
+      <h2>Admin login</h2>
+      <label>Username <input type="text" name="username" required autocomplete="username"></label>
+      <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+      <button type="submit">Log in</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="admin-section" class="hidden">
+    <div class="admin-player-bar">
+      <button type="button" id="admin-play-pause-btn" class="player-btn" title="Play / Pause">▶</button>
+      <span id="admin-now-playing">No song selected</span>
+      <audio id="admin-audio" style="display: none;"></audio>
+    </div>
+    <div class="admin-layout">
+      <div class="admin-left">
+        <div class="card">
+          <h2>Upload song</h2>
+          <form id="upload-form">
+            <input type="file" id="file-input" accept=".mp3,.m4a,.ogg,.wav,.flac" required>
+            <button type="submit">Upload</button>
+          </form>
+          <p id="upload-status" class="status"></p>
+        </div>
+        <div class="card">
+          <h2>Background images</h2>
+          <form id="bg-upload-form">
+            <input type="file" id="bg-file-input" accept=".jpg,.jpeg,.png,.gif,.webp" required>
+            <button type="submit">Upload</button>
+          </form>
+          <p id="bg-upload-status" class="status"></p>
+          <div class="setting-row">
+            <label class="setting-label">
+              <input type="checkbox" id="auto-change-bg-toggle">
+              Auto-change background when song changes
+            </label>
+          </div>
+          <ul id="bg-list"></ul>
+        </div>
+        <div class="card">
+          <h2>Songs</h2>
+          <input type="search" id="search" placeholder="Search..." autocomplete="off">
+          <ul id="song-list"></ul>
+        </div>
+      </div>
+      <div class="admin-right">
+        <div class="card">
+          <h2>Users / Listeners</h2>
+          <ul id="users-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/admin.js"></script>
+{% endblock %}

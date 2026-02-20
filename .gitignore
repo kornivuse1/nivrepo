@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment and secrets
+.env
+.env.local
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads and local data (songs, DB file in dev)
+uploads/*
+!uploads/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+test_nivpro.db
+
+# Logs and temp
+*.log
+tmp/
+temp/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/

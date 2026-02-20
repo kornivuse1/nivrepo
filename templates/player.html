@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Player – NivPro{% endblock %}
+{% block body %}
+<div class="container">
+  <header class="header">
+    <h1>NivPro</h1>
+    <div id="user-area"></div>
+  </header>
+
+  <div id="login-section">
+    <form id="login-form" class="card">
+      <h2>Log in</h2>
+      <label>Username <input type="text" name="username" required autocomplete="username"></label>
+      <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+      <button type="submit">Log in</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="player-section" class="hidden">
+    <div class="search-row">
+      <input type="search" id="search" placeholder="Search songs..." autocomplete="off">
+    </div>
+    <div class="unified-player-bar">
+      <button type="button" id="prev-btn" class="player-btn" title="Previous">⏮</button>
+      <button type="button" id="play-pause-btn" class="player-btn play-btn" title="Play">▶</button>
+      <button type="button" id="next-btn" class="player-btn" title="Next">⏭</button>
+      <button type="button" id="shuffle-btn" class="player-btn" title="Shuffle">🔀</button>
+      <div class="player-info">
+        <div id="now-playing-title">No song selected</div>
+        <div id="now-playing-artist"></div>
+      </div>
+      <button type="button" id="love-btn" class="player-btn love-btn" title="Love this song">♡</button>
+      <audio id="audio" style="display: none;"></audio>
+    </div>
+    <ul id="song-list"></ul>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/player.js"></script>
+{% endblock %}

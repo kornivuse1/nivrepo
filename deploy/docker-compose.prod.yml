@@ -1,0 +1,29 @@
+# Production: pull image from GHCR, no build on server.
+# Replace YOUR_GITHUB_USERNAME with your GitHub username (lowercase).
+# Image: ghcr.io/YOUR_GITHUB_USERNAME/nivpro:latest
+
+services:
+  app:
+    image: ghcr.io/YOUR_GITHUB_USERNAME/nivpro:latest
+    pull_policy: always
+    env_file: .env
+    environment:
+      - UPLOAD_DIR=/data/uploads
+      - DATABASE_URL=sqlite+aiosqlite:////data/nivpro.db
+    volumes:
+      - nivpro_data:/data
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  nivpro_data:
