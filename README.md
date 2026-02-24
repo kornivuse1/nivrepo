@@ -4,10 +4,10 @@ A simple 24/7 music player server: you (and chosen admins) upload songs via a se
 
 ## Features
 
-- **Player** (viewers): log in, browse and search songs, stream audio
-- **Admin** (`/admin`): log in as admin to upload and remove songs (not part of the main app UI)
-- **Storage**: song files on disk, metadata in SQLite (or PostgreSQL)
-- **Deploy**: Docker image, CI builds and pushes to GitHub Container Registry; optional deploy to VPS
+- **Player** (`/`): log in, unified bar (play/pause, prev/next, shuffle), search, stream; love songs (heart); optional background image (auto-change per song)
+- **Admin** (`/admin`): upload/edit/delete songs, play songs in admin; upload/activate background images; list and remove users; see love counts per song
+- **Storage**: song files and images on disk, metadata in SQLite (or PostgreSQL via `DATABASE_URL`)
+- **Deploy**: Docker image, GitHub Actions (test + build + push to GHCR), optional auto-deploy to VPS via SSH
 
 ## Run locally (development)
 
@@ -63,12 +63,48 @@ Songs and database are stored in Docker volumes so they persist across restarts.
 
 ## Git
 
-If you cloned or created this folder without Git, initialize a repo and make the first commit:
+If you cloned or created this folder without Git, see **PUSH_TO_GITHUB.md** for step-by-step push instructions. Quick version:
 
 ```bash
 git init
 git add .
 git commit -m "Initial commit"
+git remote add origin https://github.com/YOUR_USERNAME/nivpro.git
+git push -u origin main
 ```
 
-Then add a remote and push to GitHub. CI will run on push to `main`.
+CI runs on push to `main` (test + build image + optional deploy).
+
+---
+
+## Leftovers (continue in another session)
+
+Things to do next when you return:
+
+1. **Push to GitHub** (if not done yet)
+   - Install Git from https://git-scm.com/download/win if needed.
+   - Follow **PUSH_TO_GITHUB.md** to create the repo and push.
+   - Make the GitHub package public so the VPS can pull the image.
+
+2. **VPS setup and deploy**
+   - Buy/create a VPS (Ubuntu 22.04), note the IP.
+   - Follow **DEPLOYMENT.md** step-by-step:
+     - Phase 2: SSH, user, firewall (22, 80, 443).
+     - Phase 3: Install Docker and Docker Compose on the VPS.
+     - Phase 4: Add GitHub Actions secrets: `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`.
+     - Phase 5–6: Create `~/nivpro` on the VPS, copy `deploy/` files, create `.env`, run `docker compose -f docker-compose.prod.yml up -d` (Nginx + app).
+   - After that, each push to `main` will deploy automatically.
+
+3. **HTTPS (optional)**
+   - If you have a domain pointing to the VPS: **DEPLOYMENT.md** Phase 7 (Certbot + Nginx HTTPS).
+
+4. **Optional improvements** (see PROJECT_SUMMARY.md)
+   - HTTPS and reverse proxy on VPS.
+   - Viewer registration or invite flow.
+   - Password change / forgot password.
+   - Sort/filter by love count in admin.
+
+**Reference files**
+- **PUSH_TO_GITHUB.md** – Push this repo to GitHub.
+- **DEPLOYMENT.md** – Full VPS + Docker + Nginx + CI deploy guide.
+- **PROJECT_SUMMARY.md** – What the app does and what was built.
