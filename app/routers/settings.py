@@ -32,8 +32,8 @@ async def get_settings(
         await db.commit()
         await db.refresh(settings)
     return SettingsOut(
-        auto_change_background=settings.auto_change_background,
-        allow_registration=getattr(settings, "allow_registration", get_settings().allow_registration),
+        auto_change_background=bool(settings.auto_change_background),
+        allow_registration=bool(getattr(settings, "allow_registration", get_settings().allow_registration)),
     )
 
 
@@ -57,12 +57,12 @@ async def update_settings(
         )
         db.add(settings)
     if update_data.auto_change_background is not None:
-        settings.auto_change_background = update_data.auto_change_background
-    if update_data.allow_registration is not None:
-        settings.allow_registration = update_data.allow_registration
+        settings.auto_change_background = bool(update_data.auto_change_background)
+    if update_data.allow_registration is not None and hasattr(settings, "allow_registration"):
+        settings.allow_registration = bool(update_data.allow_registration)
     await db.commit()
     await db.refresh(settings)
     return SettingsOut(
-        auto_change_background=settings.auto_change_background,
-        allow_registration=getattr(settings, "allow_registration", get_settings().allow_registration),
+        auto_change_background=bool(settings.auto_change_background),
+        allow_registration=bool(getattr(settings, "allow_registration", get_settings().allow_registration)),
     )

@@ -280,12 +280,18 @@
     }
   }
 
-  autoChangeBgToggle.addEventListener("change", async function () {
-    const r = await fetch(API + "/admin/settings", {
+  function patchSettings(payload) {
+    return fetch(API + "/admin/settings", {
       method: "PATCH",
       headers: { ...authHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({ auto_change_background: autoChangeBgToggle.checked }),
+      body: JSON.stringify(payload),
     });
+  }
+
+  autoChangeBgToggle.addEventListener("change", async function () {
+    const payload = { auto_change_background: autoChangeBgToggle.checked };
+    if (allowRegistrationToggle) payload.allow_registration = allowRegistrationToggle.checked;
+    const r = await patchSettings(payload);
     if (!r.ok) {
       autoChangeBgToggle.checked = !autoChangeBgToggle.checked;
     }
@@ -293,11 +299,9 @@
 
   if (allowRegistrationToggle) {
     allowRegistrationToggle.addEventListener("change", async function () {
-      const r = await fetch(API + "/admin/settings", {
-        method: "PATCH",
-        headers: { ...authHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify({ allow_registration: allowRegistrationToggle.checked }),
-      });
+      const payload = { allow_registration: allowRegistrationToggle.checked };
+      payload.auto_change_background = autoChangeBgToggle.checked;
+      const r = await patchSettings(payload);
       if (!r.ok) {
         allowRegistrationToggle.checked = !allowRegistrationToggle.checked;
       }

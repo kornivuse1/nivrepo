@@ -33,7 +33,7 @@ def _add_user_ip_columns_if_missing(sync_conn):
 def _add_app_settings_allow_registration(sync_conn):
     """Add allow_registration to app_settings if missing (for existing DBs)."""
     try:
-        sync_conn.execute(text("ALTER TABLE app_settings ADD COLUMN allow_registration BOOLEAN DEFAULT 0"))
+        sync_conn.execute(text("ALTER TABLE app_settings ADD COLUMN allow_registration INTEGER DEFAULT 1"))
     except Exception:
         pass
 
