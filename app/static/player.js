@@ -234,13 +234,13 @@
     playSong(currentPlaylist[currentIndex], currentIndex);
   }
 
-  function showPlayer(user) {
+  async function showPlayer(user) {
     loginSection.classList.add("hidden");
     playerSection.classList.remove("hidden");
     userArea.innerHTML = "<span>" + user.username + "</span> <button type=\"button\" id=\"logout-btn\">Log out</button>";
     document.getElementById("logout-btn").onclick = function () { setToken(null); showLogin(); };
+    await loadBackground();
     loadSongs();
-    loadBackground();
     checkAutoChangeSetting();
   }
 
