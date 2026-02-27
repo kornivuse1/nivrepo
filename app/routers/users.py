@@ -15,6 +15,8 @@ class UserOut(BaseModel):
     username: str
     role: str
     created_at: str
+    created_ip: str | None = None
+    last_login_ip: str | None = None
 
     @classmethod
     def from_orm(cls, u: User) -> "UserOut":
@@ -23,6 +25,8 @@ class UserOut(BaseModel):
             username=u.username,
             role=u.role.value,
             created_at=u.created_at.isoformat() if u.created_at else "",
+            created_ip=getattr(u, "created_ip", None),
+            last_login_ip=getattr(u, "last_login_ip", None),
         )
 
 

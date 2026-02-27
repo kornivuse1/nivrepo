@@ -17,7 +17,9 @@
   const loginSection = document.getElementById("login-section");
   const playerSection = document.getElementById("player-section");
   const loginForm = document.getElementById("login-form");
+  const signupForm = document.getElementById("signup-form");
   const loginError = document.getElementById("login-error");
+  const signupError = document.getElementById("signup-error");
   const userArea = document.getElementById("user-area");
   const searchEl = document.getElementById("search");
   const songList = document.getElementById("song-list");
@@ -29,6 +31,33 @@
   const nextBtn = document.getElementById("next-btn");
   const shuffleBtn = document.getElementById("shuffle-btn");
   const loveBtn = document.getElementById("love-btn");
+  const timeCurrentEl = document.getElementById("time-current");
+  const progressBar = document.getElementById("progress-bar");
+  const timeTotalEl = document.getElementById("time-total");
+  const timeLeftEl = document.getElementById("time-left");
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ":" + String(s).padStart(2, "0");
+  }
+
+  let progressSeeking = false;
+
+  function updateProgressDisplay() {
+    if (progressSeeking) return;
+    const t = audio.currentTime;
+    const d = audio.duration;
+    if (Number.isFinite(d)) {
+      progressBar.max = Math.floor(d);
+      progressBar.value = Math.floor(t);
+      timeTotalEl.textContent = formatTime(d);
+      const left = Math.max(0, d - t);
+      timeLeftEl.textContent = "−" + formatTime(left);
+    }
+    timeCurrentEl.textContent = formatTime(t);
+  }
 
   let currentPlaylist = [];
   let currentIndex = -1;
@@ -45,10 +74,30 @@
     return await r.json();
   }
 
+  async function updateSignupVisibility() {
+    try {
+      const r = await fetch(API + "/auth/registration-allowed");
+      const data = await r.json().catch(function () { return { allow_registration: false }; });
+      const allow = data.allow_registration === true;
+      const signupToggle = document.getElementById("show-signup");
+      if (signupToggle && signupToggle.closest("p")) {
+        signupToggle.closest("p").style.display = allow ? "" : "none";
+      }
+    } catch (e) {
+      const p = document.getElementById("show-signup") && document.getElementById("show-signup").closest("p");
+      if (p) p.style.display = "none";
+    }
+  }
+
   function showLogin() {
     loginSection.classList.remove("hidden");
     playerSection.classList.add("hidden");
     userArea.textContent = "";
+    loginForm.classList.remove("hidden");
+    signupForm.classList.add("hidden");
+    loginError.textContent = "";
+    signupError.textContent = "";
+    updateSignupVisibility();
   }
 
   async function loadBackground(url) {
@@ -139,6 +188,11 @@
     nowPlayingTitle.textContent = song.title;
     nowPlayingArtist.textContent = song.artist;
     updateLoveButton(song.is_loved);
+    progressBar.value = 0;
+    progressBar.max = 0;
+    timeCurrentEl.textContent = "0:00";
+    timeTotalEl.textContent = "0:00";
+    timeLeftEl.textContent = "";
     if (audio.src && audio.src.startsWith("blob:")) URL.revokeObjectURL(audio.src);
     const r = await fetch(API + "/songs/" + song.id + "/stream", { headers: authHeaders() });
     if (!r.ok) {
@@ -190,6 +244,21 @@
     checkAutoChangeSetting();
   }
 
+  document.getElementById("show-signup").addEventListener("click", function (e) {
+    e.preventDefault();
+    loginForm.classList.add("hidden");
+    signupForm.classList.remove("hidden");
+    loginError.textContent = "";
+    signupError.textContent = "";
+  });
+  document.getElementById("show-login").addEventListener("click", function (e) {
+    e.preventDefault();
+    signupForm.classList.add("hidden");
+    loginForm.classList.remove("hidden");
+    loginError.textContent = "";
+    signupError.textContent = "";
+  });
+
   loginForm.addEventListener("submit", async function (e) {
     e.preventDefault();
     loginError.textContent = "";
@@ -202,6 +271,41 @@
     });
     if (!r.ok) {
       loginError.textContent = "Invalid username or password.";
+      return;
+    }
+    const data = await r.json();
+    setToken(data.access_token);
+    const user = await checkAuth();
+    if (user) showPlayer(user);
+  });
+
+  signupForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    signupError.textContent = "";
+    const formData = new FormData(signupForm);
+    const password = formData.get("password");
+    const password_confirm = formData.get("password_confirm");
+    if (password !== password_confirm) {
+      signupError.textContent = "Passwords do not match.";
+      return;
+    }
+    if (String(password).length < 6) {
+      signupError.textContent = "Password must be at least 6 characters.";
+      return;
+    }
+    const r = await fetch(API + "/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: formData.get("username"),
+        password: password,
+        password_confirm: password_confirm,
+      }),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(function () { return {}; });
+      const detail = Array.isArray(err.detail) ? err.detail.map(function (d) { return d.msg || d; }).join(" ") : err.detail;
+      signupError.textContent = detail || "Sign up failed.";
       return;
     }
     const data = await r.json();
@@ -302,6 +406,28 @@
     updatePlayPauseButton();
   });
 
+  audio.addEventListener("timeupdate", updateProgressDisplay);
+  audio.addEventListener("loadedmetadata", function () {
+    progressBar.max = Math.floor(audio.duration) || 0;
+    timeTotalEl.textContent = formatTime(audio.duration);
+    updateProgressDisplay();
+  });
+
+  progressBar.addEventListener("input", function () {
+    progressSeeking = true;
+    const val = parseInt(progressBar.value, 10);
+    if (Number.isFinite(val)) audio.currentTime = val;
+    timeCurrentEl.textContent = formatTime(val);
+    if (Number.isFinite(audio.duration)) {
+      timeLeftEl.textContent = "−" + formatTime(Math.max(0, audio.duration - val));
+    }
+  });
+  progressBar.addEventListener("change", function () {
+    progressSeeking = false;
+    if (Number.isFinite(audio.duration)) audio.currentTime = parseInt(progressBar.value, 10);
+    updateProgressDisplay();
+  });
+
   async function loadSongs(query) {
     const url = query ? API + "/songs?search=" + encodeURIComponent(query) : API + "/songs";
     const r = await fetch(url, { headers: authHeaders() });
@@ -349,6 +475,8 @@
   (async function () {
     const user = await checkAuth();
     if (user) showPlayer(user);
-    else showLogin();
+    else {
+      showLogin();
+    }
   })();
 })();

@@ -30,9 +30,35 @@
   const bgList = document.getElementById("bg-list");
   const usersList = document.getElementById("users-list");
   const autoChangeBgToggle = document.getElementById("auto-change-bg-toggle");
+  const allowRegistrationToggle = document.getElementById("allow-registration-toggle");
   const adminAudio = document.getElementById("admin-audio");
   const adminPlayPauseBtn = document.getElementById("admin-play-pause-btn");
   const adminNowPlaying = document.getElementById("admin-now-playing");
+  const adminTimeCurrent = document.getElementById("admin-time-current");
+  const adminProgressBar = document.getElementById("admin-progress-bar");
+  const adminTimeTotal = document.getElementById("admin-time-total");
+  const adminTimeLeft = document.getElementById("admin-time-left");
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ":" + String(s).padStart(2, "0");
+  }
+
+  let adminProgressSeeking = false;
+  function updateAdminProgressDisplay() {
+    if (adminProgressSeeking || !adminAudio) return;
+    const t = adminAudio.currentTime;
+    const d = adminAudio.duration;
+    if (Number.isFinite(d)) {
+      adminProgressBar.max = Math.floor(d);
+      adminProgressBar.value = Math.floor(t);
+      adminTimeTotal.textContent = formatTime(d);
+      adminTimeLeft.textContent = "−" + formatTime(Math.max(0, d - t));
+    }
+    adminTimeCurrent.textContent = formatTime(t);
+  }
 
   async function checkAuth() {
     const token = getToken();
@@ -131,6 +157,11 @@
 
   async function playSongInAdmin(songId, title, artist) {
     adminNowPlaying.textContent = (title || "Unknown") + " – " + (artist || "");
+    adminProgressBar.value = 0;
+    adminProgressBar.max = 0;
+    adminTimeCurrent.textContent = "0:00";
+    adminTimeTotal.textContent = "0:00";
+    adminTimeLeft.textContent = "";
     if (adminAudio.src && adminAudio.src.startsWith("blob:")) {
       URL.revokeObjectURL(adminAudio.src);
     }
@@ -168,6 +199,30 @@
       adminPlayPauseBtn.textContent = "▶";
       adminPlayPauseBtn.classList.remove("pause-btn");
     });
+    adminAudio.addEventListener("timeupdate", updateAdminProgressDisplay);
+    adminAudio.addEventListener("loadedmetadata", function () {
+      adminProgressBar.max = Math.floor(adminAudio.duration) || 0;
+      adminTimeTotal.textContent = formatTime(adminAudio.duration);
+      updateAdminProgressDisplay();
+    });
+  }
+  if (adminProgressBar) {
+    adminProgressBar.addEventListener("input", function () {
+      adminProgressSeeking = true;
+      const val = parseInt(adminProgressBar.value, 10);
+      if (Number.isFinite(val) && adminAudio) adminAudio.currentTime = val;
+      adminTimeCurrent.textContent = formatTime(val);
+      if (adminAudio && Number.isFinite(adminAudio.duration)) {
+        adminTimeLeft.textContent = "−" + formatTime(Math.max(0, adminAudio.duration - val));
+      }
+    });
+    adminProgressBar.addEventListener("change", function () {
+      adminProgressSeeking = false;
+      if (adminAudio && Number.isFinite(adminAudio.duration)) {
+        adminAudio.currentTime = parseInt(adminProgressBar.value, 10);
+      }
+      updateAdminProgressDisplay();
+    });
   }
 
   async function loadBackgrounds() {
@@ -202,12 +257,13 @@
     if (!r.ok) return;
     const users = await r.json();
     usersList.innerHTML = users.map(function (u) {
-      return "<li data-id=\"" + u.id + "\"><span><strong>" + escapeHtml(u.username) + "</strong> (" + escapeHtml(u.role) + ")</span><button type=\"button\" class=\"delete\">Remove</button></li>";
+      const ip = u.last_login_ip || u.created_ip || "—";
+      return "<li data-id=\"" + u.id + "\"><span><strong>" + escapeHtml(u.username) + "</strong> (" + escapeHtml(u.role) + ") — IP: " + escapeHtml(ip) + "</span><button type=\"button\" class=\"delete\">Kick</button></li>";
     }).join("");
     usersList.querySelectorAll(".delete").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         const id = btn.closest("li").dataset.id;
-        if (!confirm("Remove this user? They will lose access.")) return;
+        if (!confirm("Kick this user? They will need to sign up again to log in.")) return;
         const r = await fetch(API + "/admin/users/" + id, { method: "DELETE", headers: authHeaders() });
         if (r.ok) loadUsers();
       });
@@ -219,6 +275,9 @@
     if (!r.ok) return;
     const settings = await r.json();
     autoChangeBgToggle.checked = settings.auto_change_background || false;
+    if (allowRegistrationToggle) {
+      allowRegistrationToggle.checked = settings.allow_registration || false;
+    }
   }
 
   autoChangeBgToggle.addEventListener("change", async function () {
@@ -231,6 +290,19 @@
       autoChangeBgToggle.checked = !autoChangeBgToggle.checked;
     }
   });
+
+  if (allowRegistrationToggle) {
+    allowRegistrationToggle.addEventListener("change", async function () {
+      const r = await fetch(API + "/admin/settings", {
+        method: "PATCH",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ allow_registration: allowRegistrationToggle.checked }),
+      });
+      if (!r.ok) {
+        allowRegistrationToggle.checked = !allowRegistrationToggle.checked;
+      }
+    });
+  }
 
   function escapeHtml(s) {
     const div = document.createElement("div");

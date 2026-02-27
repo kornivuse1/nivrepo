@@ -40,6 +40,8 @@ A simple 24/7 music player server: you (and chosen admins) upload songs via a se
    python -m app.scripts.create_admin
    ```
 
+   For **local dev** you can set `CREATE_DEFAULT_ADMIN=true` in `.env` to auto-create `admin`/`admin` when the DB is empty. **In production leave this unset or false** so no default password exists; always create the first admin with the script above.
+
 ## Run with Docker (local or VPS)
 
 ```bash

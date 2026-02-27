@@ -19,8 +19,16 @@
 
   <div id="admin-section" class="hidden">
     <div class="admin-player-bar">
-      <button type="button" id="admin-play-pause-btn" class="player-btn" title="Play / Pause">▶</button>
-      <span id="admin-now-playing">No song selected</span>
+      <div class="admin-player-row">
+        <button type="button" id="admin-play-pause-btn" class="player-btn" title="Play / Pause">▶</button>
+        <span id="admin-now-playing">No song selected</span>
+      </div>
+      <div class="admin-player-progress">
+        <span id="admin-time-current" class="time-display">0:00</span>
+        <input type="range" id="admin-progress-bar" min="0" max="0" value="0" step="1" title="Seek">
+        <span id="admin-time-total" class="time-display">0:00</span>
+        <span id="admin-time-left" class="time-display time-left"></span>
+      </div>
       <audio id="admin-audio" style="display: none;"></audio>
     </div>
     <div class="admin-layout">
@@ -55,6 +63,15 @@
         </div>
       </div>
       <div class="admin-right">
+        <div class="card">
+          <h2>App settings</h2>
+          <div class="setting-row">
+            <label class="setting-label">
+              <input type="checkbox" id="allow-registration-toggle">
+              Allow new users to sign up
+            </label>
+          </div>
+        </div>
         <div class="card">
           <h2>Users / Listeners</h2>
           <ul id="users-list"></ul>

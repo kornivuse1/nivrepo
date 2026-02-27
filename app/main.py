@@ -15,18 +15,20 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     settings.images_dir.mkdir(parents=True, exist_ok=True)
-    # Dev bootstrap: create admin if no users exist (change password after first login)
+    # Optional bootstrap: only create default admin (admin/admin) if explicitly enabled (e.g. local dev).
+    # In production leave CREATE_DEFAULT_ADMIN unset or false; create first admin with: python -m app.scripts.create_admin
     from sqlalchemy import select
     from app.database import get_session_factory
     from app.models import User, UserRole
     from app.auth import hash_password
-    session_factory = get_session_factory()
-    async with session_factory() as db:
-        r = await db.execute(select(User).limit(1))
-        if r.scalar_one_or_none() is None:
-            admin = User(username="admin", password_hash=hash_password("admin"), role=UserRole.admin)
-            db.add(admin)
-            await db.commit()
+    if settings.create_default_admin:
+        session_factory = get_session_factory()
+        async with session_factory() as db:
+            r = await db.execute(select(User).limit(1))
+            if r.scalar_one_or_none() is None:
+                admin = User(username="admin", password_hash=hash_password("admin"), role=UserRole.admin)
+                db.add(admin)
+                await db.commit()
     yield
 
 

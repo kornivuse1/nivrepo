@@ -8,3 +8,4 @@ class AppSettings(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     auto_change_background: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    allow_registration: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

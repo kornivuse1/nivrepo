@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     upload_dir: Path = Path("./uploads")
     images_dir: Path = Path("./uploads/images")
     allow_registration: bool = False
+    # If True, create default admin (admin/admin) when no users exist. Set False in production.
+    create_default_admin: bool = False
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 

@@ -26,7 +26,8 @@ button:hover { background: #0b5ed7; }
 .status { margin-top: 0.5rem; font-size: 0.9rem; }
 .search-row { margin-bottom: 1rem; }
 .search-row input, .card input[type="search"] { width: 100%; padding: 0.5rem; border: 1px solid #444; border-radius: 4px; background: #1a1a1a; color: #e0e0e0; }
-.unified-player-bar { display: flex; align-items: center; gap: 0.5rem; padding: 1rem; background: #2a2a2a; border-radius: 8px; margin-bottom: 1rem; }
+.unified-player-bar { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; background: #2a2a2a; border-radius: 8px; margin-bottom: 1rem; }
+.player-bar-row { display: flex; align-items: center; gap: 0.5rem; }
 .player-btn { width: 40px; height: 40px; border: none; border-radius: 50%; background: #3a3a3a; color: #e0e0e0; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .player-btn:hover { background: #4a4a4a; }
 .player-btn.active { background: #0d6efd; }
@@ -34,6 +35,14 @@ button:hover { background: #0b5ed7; }
 .player-info { flex: 1; margin: 0 1rem; min-width: 0; }
 #now-playing-title { font-weight: bold; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #now-playing-artist { font-size: 0.85rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-progress { display: flex; align-items: center; gap: 0.5rem; width: 100%; }
+.player-progress input[type="range"] { flex: 1; min-width: 0; height: 6px; accent-color: #0d6efd; cursor: pointer; }
+.time-display { font-size: 0.8rem; color: #888; min-width: 2.5rem; }
+.time-display.time-left { min-width: 3.5rem; color: #666; }
+.admin-player-bar { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; background: #2a2a2a; border-radius: 8px; margin-bottom: 1rem; }
+.admin-player-row { display: flex; align-items: center; gap: 1rem; }
+.admin-player-progress { display: flex; align-items: center; gap: 0.5rem; width: 100%; }
+.admin-player-progress input[type="range"] { flex: 1; min-width: 0; height: 6px; accent-color: #0d6efd; cursor: pointer; }
 #song-list { list-style: none; padding: 0; margin: 0; }
 #song-list, #bg-list, #users-list { list-style: none; padding: 0; margin: 0; }
 #song-list li, #bg-list li, #users-list li { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #333; cursor: pointer; }

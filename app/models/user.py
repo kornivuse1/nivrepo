@@ -18,6 +18,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, default=UserRole.viewer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_ip: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    last_login_ip: Mapped[str | None] = mapped_column(String(45), nullable=True)
 
     def is_admin(self) -> bool:
         return self.role == UserRole.admin
