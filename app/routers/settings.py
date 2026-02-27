@@ -24,10 +24,9 @@ async def get_settings(
     result = await db.execute(select(AppSettings).limit(1))
     settings = result.scalar_one_or_none()
     if not settings:
-        config = get_settings()
         settings = AppSettings(
             auto_change_background=False,
-            allow_registration=config.allow_registration,
+            allow_registration=get_settings().allow_registration,
         )
         db.add(settings)
         await db.commit()
@@ -52,10 +51,9 @@ async def update_settings(
     result = await db.execute(select(AppSettings).limit(1))
     settings = result.scalar_one_or_none()
     if not settings:
-        config = get_settings()
         settings = AppSettings(
             auto_change_background=False,
-            allow_registration=config.allow_registration,
+            allow_registration=get_settings().allow_registration,
         )
         db.add(settings)
     if update_data.auto_change_background is not None:
@@ -66,5 +64,5 @@ async def update_settings(
     await db.refresh(settings)
     return SettingsOut(
         auto_change_background=settings.auto_change_background,
-        allow_registration=getattr(settings, "allow_registration", False),
+        allow_registration=getattr(settings, "allow_registration", get_settings().allow_registration),
     )

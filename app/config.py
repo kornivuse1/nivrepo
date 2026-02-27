@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./nivpro.db"
     upload_dir: Path = Path("./uploads")
     images_dir: Path = Path("./uploads/images")
-    allow_registration: bool = False
+    allow_registration: bool = True
     # If True, create default admin (admin/admin) when no users exist. Set False in production.
     create_default_admin: bool = False
 
