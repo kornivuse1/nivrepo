@@ -239,9 +239,9 @@
     playerSection.classList.remove("hidden");
     userArea.innerHTML = "<span>" + user.username + "</span> <button type=\"button\" id=\"logout-btn\">Log out</button>";
     document.getElementById("logout-btn").onclick = function () { setToken(null); showLogin(); };
-    await loadBackground();
+    await checkAutoChangeSetting();
+    await loadRandomBackground();
     loadSongs();
-    checkAutoChangeSetting();
   }
 
   document.getElementById("show-signup").addEventListener("click", function (e) {
