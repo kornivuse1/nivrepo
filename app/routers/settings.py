@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
-from app.config import get_settings
+from app.config import get_settings as get_config
 from app.database import get_db
 from app.auth import get_current_admin
 from app.models import AppSettings
@@ -27,14 +27,14 @@ async def get_settings(
     if not settings:
         settings = AppSettings(
             auto_change_background=False,
-            allow_registration=get_settings().allow_registration,
+            allow_registration=get_config().allow_registration,
         )
         db.add(settings)
         await db.commit()
         await db.refresh(settings)
     return SettingsOut(
         auto_change_background=bool(settings.auto_change_background),
-        allow_registration=bool(getattr(settings, "allow_registration", get_settings().allow_registration)),
+        allow_registration=bool(getattr(settings, "allow_registration", get_config().allow_registration)),
     )
 
 
@@ -55,7 +55,7 @@ async def update_settings(
         if not settings:
             settings = AppSettings(
                 auto_change_background=False,
-                allow_registration=get_settings().allow_registration,
+                allow_registration=get_config().allow_registration,
             )
             db.add(settings)
         if update_data.auto_change_background is not None:
@@ -66,7 +66,7 @@ async def update_settings(
         await db.refresh(settings)
         return SettingsOut(
             auto_change_background=bool(settings.auto_change_background),
-            allow_registration=bool(getattr(settings, "allow_registration", get_settings().allow_registration)),
+            allow_registration=bool(getattr(settings, "allow_registration", get_config().allow_registration)),
         )
     except SQLAlchemyError as e:
         err_msg = str(e).lower()
