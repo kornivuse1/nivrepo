@@ -4,10 +4,10 @@ A simple 24/7 music player server: you (and chosen admins) upload songs via a se
 
 ## Features
 
-- **Player** (`/`): log in, unified bar (play/pause, prev/next, shuffle), search, stream; love songs (heart); optional background image (auto-change per song)
-- **Admin** (`/admin`): upload/edit/delete songs, play songs in admin; upload/activate background images; list and remove users; see love counts per song
-- **Storage**: song files and images on disk, metadata in SQLite (or PostgreSQL via `DATABASE_URL`)
-- **Deploy**: Docker image, GitHub Actions (test + build + push to GHCR), optional auto-deploy to VPS via SSH
+- **Player** (`/`): Sign up or log in; unified bar (play/pause, prev/next, shuffle, seek, time left); search, stream; love songs (heart); random background image on open, optional auto-change when song changes; mobile-responsive layout.
+- **Admin** (`/admin`): Upload/edit/delete songs, play in admin; upload/activate background images; **App settings** (allow new users to sign up, auto-change background when song changes); list users with IP and **Kick**; see love counts per song.
+- **Storage**: Song files and images on disk, metadata in SQLite (or PostgreSQL via `DATABASE_URL`).
+- **Deploy**: Docker image, GitHub Actions (test + build + push to GHCR), optional auto-deploy to VPS via SSH. Use `/version` to check which build is running.
 
 ## Run locally (development)
 
@@ -40,7 +40,7 @@ A simple 24/7 music player server: you (and chosen admins) upload songs via a se
    python -m app.scripts.create_admin
    ```
 
-   For **local dev** you can set `CREATE_DEFAULT_ADMIN=true` in `.env` to auto-create `admin`/`admin` when the DB is empty. **In production leave this unset or false** so no default password exists; always create the first admin with the script above.
+   For **local dev** you can set `CREATE_DEFAULT_ADMIN=true` in `.env` to auto-create `admin`/`admin` when the DB is empty. **In production leave this unset or false** so no default password exists; create the first admin with the script above. To list all users (including admins): `python -m app.scripts.list_users`.
 
 ## Run with Docker (local or VPS)
 
@@ -60,6 +60,7 @@ Songs and database are stored in Docker volumes so they persist across restarts.
 ## Project layout
 
 - `app/` – FastAPI app, auth, routers, services, static files
+- `app/scripts/` – `create_admin.py` (create admin user), `list_users.py` (list all users)
 - `templates/` – Jinja2 templates (player + admin)
 - `uploads/` – Song files (gitignored; use a volume in production)
 
@@ -101,8 +102,7 @@ Things to do next when you return:
    - If you have a domain pointing to the VPS: **DEPLOYMENT.md** Phase 7 (Certbot + Nginx HTTPS).
 
 4. **Optional improvements** (see PROJECT_SUMMARY.md)
-   - HTTPS and reverse proxy on VPS.
-   - Viewer registration or invite flow.
+   - HTTPS (DEPLOYMENT.md Phase 7).
    - Password change / forgot password.
    - Sort/filter by love count in admin.
 

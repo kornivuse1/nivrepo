@@ -41,35 +41,36 @@ A summary of the work done on the NivPro music player server from initial setup 
 ### 4.1 Authentication and users
 
 - Login with username/password; JWT stored in `localStorage` (separate keys for player and admin).
+- **Sign up**: Viewers can create an account on the player page (Sign up) when **Allow new users to sign up** is enabled in Admin → App settings.
 - **Viewers**: Can list songs, search, stream, love songs.
-- **Admins**: Can do everything viewers can, plus manage songs, backgrounds, users, and settings.
-- First run: if no users exist, a default **admin** user is created (username: `admin`, password: `admin`).
-- Optional script: `python -m app.scripts.create_admin` to create more users (admin or viewer).
+- **Admins**: Can do everything viewers can, plus manage songs, backgrounds, users, and App settings.
+- **First admin**: No default admin in production. Set `CREATE_DEFAULT_ADMIN=true` in `.env` only for local dev to auto-create `admin`/`admin`; in production create the first admin with `python -m app.scripts.create_admin`. List all users with `python -m app.scripts.list_users`.
 
 ### 4.2 Player page (`/`)
 
-- **Unified player bar**: Previous, Play/Pause, Next, Shuffle, current song title/artist, Love.
+- **Unified player bar**: Previous, Play/Pause, Next, Shuffle, current song title/artist, Love; **progress bar** with current time, total time, time left, and **seek** (click/drag to jump).
 - **Playlist behavior**: Songs play one after another; shuffle toggles random order.
 - **Search**: Filter song list by title/artist.
 - **Love**: Heart icon (♡/❤); users can love/unlove the current song; count shown per song.
-- **Background**: Optional background image (one active at a time); optional “auto-change background when song changes” (random image per song).
+- **Background**: A **random** background image is shown **on open** (before any song plays). When **Auto-change background when song changes** is on (Admin → App settings), a new random image loads each time the song changes.
 - **Streaming**: Audio is fetched with auth and played via a blob URL (no native `<audio src>` to avoid missing `Authorization` header).
+- **Mobile**: Responsive layout; player bar and progress bar fit small screens; background uses `cover` so the image is visible.
 
 ### 4.3 Admin page (`/admin`)
 
-- **Songs**: Upload (mp3, m4a, ogg, wav, flac), edit title/artist, delete, **play** (mini player bar with Play/Pause and “Now playing”).
+- **Songs**: Upload (mp3, m4a, ogg, wav, flac), edit title/artist, delete, **play** (mini player bar with progress and seek).
 - **Love counts**: Each song shows how many users loved it (❤ N).
-- **Background images**: Upload (jpg, png, gif, webp), activate one as player background, delete.
-- **Setting**: “Auto-change background when song changes” (on/off).
-- **Users / listeners**: List all users; remove a user (revokes access); cannot remove yourself.
+- **Background images**: Upload (jpg, png, gif, webp), activate one, delete.
+- **App settings**: “Allow new users to sign up” (on/off); “Auto-change background when song changes” (on/off). Both are stored in the DB and can be toggled from the admin UI.
+- **Users / listeners**: List all users with **username, role, and IP** (last login or signup); **Kick** (remove user; they must sign up again to return). Cannot remove yourself.
 
 ### 4.4 Data and storage
 
 - **Songs**: Metadata in `songs` table (id, filename, title, artist, duration_seconds, created_at); files in `UPLOAD_DIR` (e.g. `uploads/`). Metadata can be read from file tags (mutagen).
 - **Background images**: `background_images` table; files in `uploads/images/`; one row can be marked `is_active`.
-- **Users**: `users` table (username, password_hash, role, created_at).
+- **Users**: `users` table (username, password_hash, role, created_at, created_ip, last_login_ip).
 - **Loves**: `song_loves` table (user_id, song_id, created_at) with unique (user_id, song_id).
-- **App settings**: `app_settings` table (e.g. `auto_change_background`).
+- **App settings**: `app_settings` table (auto_change_background, allow_registration).
 
 ---
 
@@ -90,7 +91,7 @@ NivPro/
 │   │   ├── settings.py        # AppSettings
 │   │   └── song_love.py       # SongLove
 │   ├── routers/
-│   │   ├── auth_router.py     # POST /api/auth/login, GET /api/auth/me
+│   │   ├── auth_router.py     # POST /api/auth/login, POST /api/auth/register, GET /api/auth/me, GET /api/auth/registration-allowed
 │   │   ├── player.py          # Songs list/stream, background, love, settings
 │   │   ├── admin.py           # Admin songs CRUD + love_count
 │   │   ├── background.py      # Admin backgrounds CRUD, activate
@@ -101,7 +102,9 @@ NivPro/
 │   │   ├── style.css          # Shared + player + admin styles
 │   │   ├── player.js          # Player UI, playlist, shuffle, love, background
 │   │   └── admin.js           # Admin UI, play in admin, settings, users
-│   └── scripts/create_admin.py   # CLI to create admin (or viewer) user
+│   └── scripts/
+│       ├── create_admin.py   # CLI to create admin user
+│       └── list_users.py     # CLI to list all users (id, username, role, IP)
 ├── templates/
 │   ├── base.html
 │   ├── player.html            # Player page
@@ -121,6 +124,8 @@ NivPro/
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/api/auth/login` | - | Login (form: username, password); returns JWT |
+| POST | `/api/auth/register` | - | Sign up (JSON: username, password, password_confirm); requires allow_registration |
+| GET | `/api/auth/registration-allowed` | - | Public: whether sign-up is enabled (for showing Sign up link) |
 | GET | `/api/auth/me` | Bearer | Current user info |
 | GET | `/api/songs` | Viewer | List songs (optional `?search=`) with love_count, is_loved |
 | GET | `/api/songs/{id}/stream` | Viewer | Stream audio file |
@@ -136,7 +141,8 @@ NivPro/
 | POST | `/api/admin/backgrounds/{id}/activate` | Admin | Set active background |
 | GET | `/api/admin/users` | Admin | List users |
 | DELETE | `/api/admin/users/{id}` | Admin | Remove user |
-| GET/PATCH | `/api/admin/settings` | Admin | Get/update app settings (e.g. auto_change_background) |
+| GET/PATCH | `/api/admin/settings` | Admin | Get/update app settings (auto_change_background, allow_registration) |
+| GET | `/version` | - | Build info (build_sha, build_id) to verify what is running on the server |
 
 ---
 
@@ -152,18 +158,20 @@ NivPro/
 
 - **Auth**: Replaced passlib+bcrypt version clash with direct `bcrypt` for password hashing.
 - **Streaming**: Player and admin do not use `<audio src="...">` for the stream URL; they `fetch` with `Authorization` and set `audio.src` to a blob URL so the request is authenticated.
-- **Admin play**: Added a small player bar and per-song Play button on the admin page so admins can play songs without leaving `/admin`.
-- **UX**: Single player bar (prev/play-pause/next/shuffle, now playing, love); song list with current track highlight and love count; admin sees love counts and can play from the list.
+- **Admin play**: Player bar with progress and seek on admin page.
+- **UX**: Single player bar with progress/seek and time left; song list with current track highlight and love count; admin sees love counts, user IPs, and Kick; App settings toggles (allow registration, auto-change background).
+- **Settings**: App settings (allow_registration, auto_change_background) stored in DB and editable from Admin; config `get_settings` renamed to `get_config` in settings router to avoid name clash with the GET endpoint.
+- **Background**: Random image on player open; auto-change when song changes when the setting is on.
+- **Deploy**: `/version` endpoint returns build_sha and build_id so you can confirm which image is running.
 
 ---
 
 ## 9. Possible next steps (not done yet)
 
-- HTTPS and reverse proxy (e.g. Caddy/Nginx) on VPS.
-- Optional viewer registration or invite flow.
+- HTTPS (see DEPLOYMENT.md Phase 7 with Certbot).
 - Optional “forgot password” or password change.
 - Sort/filter by love count or date in admin.
-- Volume control or progress bar in the player bar (optional).
+- Volume control in the player bar (optional).
 
 ---
 

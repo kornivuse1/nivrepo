@@ -7,7 +7,7 @@ Do this on your laptop (in PowerShell or Command Prompt) from the project folder
 ## Step 1: Create the repository on GitHub (in the browser)
 
 1. Go to **https://github.com/new**
-2. **Repository name**: `nivpro` (or any name you like)
+2. **Repository name**: `nivpro` or `nivrepo` (or any name you like). The Docker image name will match (e.g. `ghcr.io/YOUR_USERNAME/nivrepo`).
 3. **Description**: optional, e.g. "Music player server"
 4. Choose **Private** or **Public**
 5. **Do not** check "Add a README", "Add .gitignore", or "Choose a license" (we already have these)

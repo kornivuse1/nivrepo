@@ -79,7 +79,7 @@ Log out and log in again so the `docker` group applies (or run `newgrp docker`).
 sudo apt install -y docker-compose-plugin
 ```
 
-Check:
+Check (use `docker compose` with a space, not `docker-compose`):
 
 ```bash
 docker --version
@@ -246,7 +246,7 @@ docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-Open in the browser: `http://YOUR_VPS_IP`. You should see the NivPro login.
+Open in the browser: `http://YOUR_VPS_IP`. You should see the NivPro login. To confirm which build is running, open `http://YOUR_VPS_IP/version` (returns `build_sha` and `build_id`; compare `build_sha` with your latest commit on GitHub).
 
 To use the **deploy** job from CI, the script on the VPS must use this file and directory. For example, in the workflow use:
 
