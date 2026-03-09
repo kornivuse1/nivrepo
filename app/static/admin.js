@@ -31,6 +31,7 @@
   const usersList = document.getElementById("users-list");
   const autoChangeBgToggle = document.getElementById("auto-change-bg-toggle");
   const allowRegistrationToggle = document.getElementById("allow-registration-toggle");
+  const settingsErrorEl = document.getElementById("settings-error");
   const adminAudio = document.getElementById("admin-audio");
   const adminPlayPauseBtn = document.getElementById("admin-play-pause-btn");
   const adminNowPlaying = document.getElementById("admin-now-playing");
@@ -271,12 +272,20 @@
   }
 
   async function loadSettings() {
+    showSettingsError("");
     const r = await fetch(API + "/admin/settings", { headers: authHeaders() });
     if (!r.ok) return;
     const settings = await r.json();
     autoChangeBgToggle.checked = settings.auto_change_background || false;
     if (allowRegistrationToggle) {
       allowRegistrationToggle.checked = settings.allow_registration || false;
+    }
+  }
+
+  function showSettingsError(msg) {
+    if (settingsErrorEl) {
+      settingsErrorEl.textContent = msg || "";
+      settingsErrorEl.style.display = msg ? "block" : "none";
     }
   }
 
@@ -288,23 +297,43 @@
     });
   }
 
+  async function updateSettingsCheckboxes(payload, revertCheckbox) {
+    showSettingsError("");
+    const r = await patchSettings(payload);
+    if (!r.ok) {
+      revertCheckbox();
+      let msg = "Settings update failed (" + r.status + "). ";
+      try {
+        const text = await r.text();
+        try {
+          const err = JSON.parse(text);
+          if (err.detail) msg += typeof err.detail === "string" ? err.detail : (err.detail.msg || text);
+          else msg += text.slice(0, 200);
+        } catch (_) {
+          if (text) msg += text.slice(0, 300);
+        }
+      } catch (e) {
+        msg += "Check server logs.";
+      }
+      showSettingsError(msg);
+    }
+  }
+
   autoChangeBgToggle.addEventListener("change", async function () {
     const payload = { auto_change_background: autoChangeBgToggle.checked };
     if (allowRegistrationToggle) payload.allow_registration = allowRegistrationToggle.checked;
-    const r = await patchSettings(payload);
-    if (!r.ok) {
+    await updateSettingsCheckboxes(payload, function () {
       autoChangeBgToggle.checked = !autoChangeBgToggle.checked;
-    }
+    });
   });
 
   if (allowRegistrationToggle) {
     allowRegistrationToggle.addEventListener("change", async function () {
       const payload = { allow_registration: allowRegistrationToggle.checked };
       payload.auto_change_background = autoChangeBgToggle.checked;
-      const r = await patchSettings(payload);
-      if (!r.ok) {
+      await updateSettingsCheckboxes(payload, function () {
         allowRegistrationToggle.checked = !allowRegistrationToggle.checked;
-      }
+      });
     });
   }
 

@@ -62,3 +62,14 @@ async def admin_page(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/version")
+async def version():
+    """Return build info so you can check what is running on the server (e.g. after deploy)."""
+    import os
+    return {
+        "status": "ok",
+        "build_sha": os.environ.get("BUILD_SHA", "unknown"),
+        "build_id": os.environ.get("BUILD_DATE", "unknown"),
+    }

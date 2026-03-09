@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from pydantic import BaseModel
 
 from app.config import get_settings
@@ -48,21 +49,48 @@ async def update_settings(
     db: AsyncSession = Depends(get_db),
     user = Depends(get_current_admin),
 ):
-    result = await db.execute(select(AppSettings).limit(1))
-    settings = result.scalar_one_or_none()
-    if not settings:
-        settings = AppSettings(
-            auto_change_background=False,
-            allow_registration=get_settings().allow_registration,
+    try:
+        result = await db.execute(select(AppSettings).limit(1))
+        settings = result.scalar_one_or_none()
+        if not settings:
+            settings = AppSettings(
+                auto_change_background=False,
+                allow_registration=get_settings().allow_registration,
+            )
+            db.add(settings)
+        if update_data.auto_change_background is not None:
+            settings.auto_change_background = bool(update_data.auto_change_background)
+        if update_data.allow_registration is not None:
+            setattr(settings, "allow_registration", bool(update_data.allow_registration))
+        await db.commit()
+        await db.refresh(settings)
+        return SettingsOut(
+            auto_change_background=bool(settings.auto_change_background),
+            allow_registration=bool(getattr(settings, "allow_registration", get_settings().allow_registration)),
         )
-        db.add(settings)
-    if update_data.auto_change_background is not None:
-        settings.auto_change_background = bool(update_data.auto_change_background)
-    if update_data.allow_registration is not None and hasattr(settings, "allow_registration"):
-        settings.allow_registration = bool(update_data.allow_registration)
-    await db.commit()
-    await db.refresh(settings)
-    return SettingsOut(
-        auto_change_background=bool(settings.auto_change_background),
-        allow_registration=bool(getattr(settings, "allow_registration", get_settings().allow_registration)),
-    )
+    except SQLAlchemyError as e:
+        err_msg = str(e).lower()
+        if ("allow_registration" in err_msg or "no such column" in err_msg) and update_data.allow_registration is not None:
+            await db.rollback()
+            try:
+                await db.execute(text("ALTER TABLE app_settings ADD COLUMN allow_registration INTEGER DEFAULT 1"))
+                await db.commit()
+                result = await db.execute(select(AppSettings).limit(1))
+                settings = result.scalar_one_or_none()
+                if settings:
+                    setattr(settings, "allow_registration", bool(update_data.allow_registration))
+                    if update_data.auto_change_background is not None:
+                        settings.auto_change_background = bool(update_data.auto_change_background)
+                    await db.commit()
+                    await db.refresh(settings)
+                    return SettingsOut(
+                        auto_change_background=bool(settings.auto_change_background),
+                        allow_registration=bool(getattr(settings, "allow_registration", True)),
+                    )
+            except Exception:
+                await db.rollback()
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Settings update failed: {str(e)}")
