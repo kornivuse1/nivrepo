@@ -54,7 +54,7 @@ async def get_active_background(
     path = img.path_for(settings.images_dir)
     if not path.exists():
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(path, media_type="image/jpeg")
+    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
 @router.post("", response_model=BackgroundImageOut)
