@@ -51,12 +51,12 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @app.get("/")
 async def player_page(request: Request):
-    return templates.TemplateResponse("player.html", {"request": request})
+    return templates.TemplateResponse(request, "player.html")
 
 
 @app.get("/admin")
 async def admin_page(request: Request):
-    return templates.TemplateResponse("admin.html", {"request": request})
+    return templates.TemplateResponse(request, "admin.html")
 
 
 @app.get("/health")
