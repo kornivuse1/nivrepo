@@ -100,25 +100,6 @@
     updateSignupVisibility();
   }
 
-  async function loadBackground(url) {
-    try {
-      if (url && url.startsWith("blob:")) {
-        URL.revokeObjectURL(url);
-      }
-      const r = await fetch(API + "/songs/background/active", { headers: authHeaders() });
-      if (r.ok) {
-        const blob = await r.blob();
-        const newUrl = URL.createObjectURL(blob);
-        document.body.style.backgroundImage = "url(" + newUrl + ")";
-        document.body.classList.add("has-background");
-        return newUrl;
-      }
-    } catch (e) {
-      // No background or error - ignore
-    }
-    return null;
-  }
-
   async function loadRandomBackground() {
     try {
       const r = await fetch(API + "/songs/background/random", { headers: authHeaders() });
