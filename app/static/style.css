@@ -72,12 +72,23 @@ button:hover { background: #0b5ed7; }
 #user-area button { background: transparent; color: #888; }
 #user-area button:hover { color: #e0e0e0; }
 
-/* Mobile: background cover, player bar = one row of 5 buttons + row of now-playing + progress */
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   body.has-background { background-size: cover; background-position: center; }
   body { padding: 0.5rem; overflow-x: hidden; }
   .container { max-width: 100%; padding: 0 0.25rem; overflow-x: hidden; }
-  .unified-player-bar { padding: 0.6rem; padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)); width: 100%; max-width: 100%; box-sizing: border-box; }
+
+  /* Admin: collapse two-column grid to a single column */
+  .admin-layout { grid-template-columns: 1fr; }
+
+  /* Player bar */
+  .unified-player-bar {
+    padding: 0.6rem;
+    padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
   .player-bar-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -106,6 +117,44 @@ button:hover { background: #0b5ed7; }
   .player-progress input[type="range"] { flex: 1; min-width: 0; height: 8px; accent-color: #0d6efd; }
   .player-progress .time-display { font-size: 0.75rem; min-width: 2rem; }
   .player-progress .time-left { display: none; }
-  #song-list li { padding: 0.85rem 0.5rem; min-height: 44px; }
+
+  /* Player song list: prevent long title from pushing love icon off-screen */
+  #song-list li { padding: 0.85rem 0.5rem; min-height: 48px; }
+  #song-list li > span:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 0.5rem;
+  }
+  .song-love { flex-shrink: 0; }
+
+  /* Admin song list: stack info inputs above action buttons */
+  .admin-container #song-list li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    cursor: default;
+  }
+  .song-info { flex-wrap: wrap; gap: 0.25rem; }
+  .song-info input { flex: 1 1 45%; min-width: 0; font-size: 0.85rem; }
+  .song-info > span { display: none; }  /* hide " – " separator between inputs */
+  .song-actions { flex-wrap: wrap; gap: 0.4rem; }
+  .song-actions button { flex-shrink: 0; }
+
+  /* Background and user lists: comfortable touch targets */
+  #bg-list li, #users-list li { padding: 0.85rem 0.5rem; min-height: 48px; flex-wrap: wrap; gap: 0.35rem; }
+  #bg-list li > span, #users-list li > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Header */
   .header { flex-wrap: wrap; gap: 0.5rem; }
+  .header h1 { font-size: 1.25rem; }
 }
